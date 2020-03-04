@@ -4,6 +4,8 @@ import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.util.AttributeSet;
+import android.view.GestureDetector;
+import android.view.ScaleGestureDetector;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
@@ -27,6 +29,12 @@ import java.util.List;
 public class PlanCompleteBarView extends LinearLayout {
     private List<DataWrapper> mDataWrappers;
     private Context mContext;
+    //堆叠
+    public final static int BAR_STYLE_OVERLAY = 0;
+    //排列
+    public final static int BAR_STYLE_TIE = 1;
+
+    private int barstyle = BAR_STYLE_OVERLAY;
     //底部文字占用高度
     private int marginBottom;
     //顶部文字占用高度
@@ -68,7 +76,7 @@ public class PlanCompleteBarView extends LinearLayout {
     //线条
     private Paint linePaint;
     private int lineWidth = 1;
-    private int lineColor =0xffE6E6E6;
+    private int lineColor = 0xffE6E6E6;
 
     private Paint planPaint;
     private Paint completePaint;
@@ -229,24 +237,32 @@ public class PlanCompleteBarView extends LinearLayout {
                 float v = xPaint.measureText(label);
                 canvas.drawText(label, j * (SizeUtils.dp2px(mContext, spaceWidth)
                         + SizeUtils.dp2px(mContext, barWidth))
-                        + SizeUtils.dp2px(mContext, barWidth/2)  +
-                        SizeUtils.dp2px(mContext, spaceWidth/2) - v / 2, -5, xPaint);
+                        + SizeUtils.dp2px(mContext, barWidth / 2) +
+                        SizeUtils.dp2px(mContext, spaceWidth / 2) - v / 2, -5, xPaint);
             }
             //bar
             canvas.translate(0, -marginBottom);
             for (int j = 0; j < mDataWrappers.size(); j++) {
                 float x = j * (SizeUtils.dp2px(mContext, spaceWidth)
                         + SizeUtils.dp2px(mContext, barWidth))
-                        + SizeUtils.dp2px(mContext, barWidth/2)+
-                        SizeUtils.dp2px(mContext, spaceWidth/2);
+                        + SizeUtils.dp2px(mContext, barWidth / 2) +
+                        SizeUtils.dp2px(mContext, spaceWidth / 2);
 
                 DataWrapper dataWrapper = mDataWrappers.get(j);
-                if (dataWrapper.complete > dataWrapper.plan) {
-                    canvas.drawLine(x, 0, x, -dataWrapper.complete * percentHeight, completePaint);
-                    canvas.drawLine(x, 0, x, -dataWrapper.plan * percentHeight, planPaint);
-                } else {
-                    canvas.drawLine(x, 0, x, -dataWrapper.plan * percentHeight, planPaint);
-                    canvas.drawLine(x, 0, x, -dataWrapper.complete * percentHeight, completePaint);
+                if (BAR_STYLE_OVERLAY == barstyle) {
+                    if (dataWrapper.complete > dataWrapper.plan) {
+                        canvas.drawLine(x, 0, x, -dataWrapper.complete * percentHeight, completePaint);
+                        canvas.drawLine(x, 0, x, -dataWrapper.plan * percentHeight, planPaint);
+                    } else {
+                        canvas.drawLine(x, 0, x, -dataWrapper.plan * percentHeight, planPaint);
+                        canvas.drawLine(x, 0, x, -dataWrapper.complete * percentHeight, completePaint);
+                    }
+                }else if(BAR_STYLE_TIE == barstyle){
+                    planPaint.setStrokeWidth(SizeUtils.dp2px(mContext, barWidth/2));
+                    completePaint.setStrokeWidth(SizeUtils.dp2px(mContext, barWidth/2));
+                    canvas.drawLine(x-SizeUtils.dp2px(mContext, barWidth/4), 0, x-SizeUtils.dp2px(mContext, barWidth/4), -dataWrapper.plan * percentHeight, planPaint);
+                    canvas.drawLine(x+SizeUtils.dp2px(mContext, barWidth/4), 0,
+                            x+SizeUtils.dp2px(mContext, barWidth/4), -dataWrapper.complete * percentHeight, completePaint);
                 }
                 //300/200
                 String s = "/";
@@ -257,27 +273,27 @@ public class PlanCompleteBarView extends LinearLayout {
 
                 x = j * (SizeUtils.dp2px(mContext, spaceWidth)
                         + SizeUtils.dp2px(mContext, barWidth))
-                        + SizeUtils.dp2px(mContext, barWidth/2) +
-                        SizeUtils.dp2px(mContext, spaceWidth/2);
+                        + SizeUtils.dp2px(mContext, barWidth / 2) +
+                        SizeUtils.dp2px(mContext, spaceWidth / 2);
 
-                canvas.drawText(s, x-v/2, -(Math.max(dataWrapper.complete, dataWrapper.plan) * percentHeight)
+                canvas.drawText(s, x - v / 2, -(Math.max(dataWrapper.complete, dataWrapper.plan) * percentHeight)
                         - SizeUtils.dp2px(mContext, 10), topPaint);
 
                 topPaint.setColor(completeColor);
-                float v1=topPaint.measureText(String.valueOf(dataWrapper.complete));
-                canvas.drawText(String.valueOf(dataWrapper.complete), x-v/2-v1, -(Math.max(dataWrapper.complete, dataWrapper.plan) * percentHeight)
+                float v1 = topPaint.measureText(String.valueOf(dataWrapper.complete));
+                canvas.drawText(String.valueOf(dataWrapper.complete), x - v / 2 - v1, -(Math.max(dataWrapper.complete, dataWrapper.plan) * percentHeight)
                         - SizeUtils.dp2px(mContext, 10), topPaint);
 
                 topPaint.setColor(planColor);
-                canvas.drawText(String.valueOf(dataWrapper.plan), x+v/2, -(Math.max(dataWrapper.complete, dataWrapper.plan) * percentHeight)
+                canvas.drawText(String.valueOf(dataWrapper.plan), x + v / 2, -(Math.max(dataWrapper.complete, dataWrapper.plan) * percentHeight)
                         - SizeUtils.dp2px(mContext, 10), topPaint);
 
                 topPaint.setColor(percentColor);
                 float percent = (float) dataWrapper.complete / dataWrapper.plan * 100;
-                s = (int)percent + "%";
+                s = (int) percent + "%";
                 v = topPaint.measureText(s);
-                canvas.drawText(s, x-v/2, -(Math.max(dataWrapper.complete, dataWrapper.plan) * percentHeight)
-                        - SizeUtils.dp2px(mContext, 5)-i1, topPaint);
+                canvas.drawText(s, x - v / 2, -(Math.max(dataWrapper.complete, dataWrapper.plan) * percentHeight)
+                        - SizeUtils.dp2px(mContext, 5) - i1, topPaint);
             }
         }
 
@@ -443,6 +459,14 @@ public class PlanCompleteBarView extends LinearLayout {
 
     public void setStep(int step) {
         this.step = step;
+    }
+
+    public int getBarstyle() {
+        return barstyle;
+    }
+
+    public void setBarstyle(int barstyle) {
+        this.barstyle = barstyle;
     }
 
     @Override

@@ -30,6 +30,7 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View v) {
                 planCompleteBarView.setMaxValue(1000);
                 planCompleteBarView.setStep(10);
+                planCompleteBarView.setBarstyle(PlanCompleteBarView.BAR_STYLE_TIE);
                 planCompleteBarView.setDataWrappers(mDataWrappers);
                 planCompleteBarView.invalidate();
             }
