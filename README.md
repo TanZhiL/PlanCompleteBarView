@@ -1,4 +1,3 @@
-话不多说,先上效果图:
 ![效果图](https://github.com/TanZhiL/PlanCompleteBarView/blob/master/screenshot.png)
 ![效果图](https://github.com/TanZhiL/PlanCompleteBarView/blob/master/screenshot1.png)
 ### 要点
@@ -191,4 +190,4 @@ public class PlanCompleteBarView extends LinearLayout {
             }
         }
 ```
-完成.查看完整代码请跳转[https://github.com/TanZhiL/PlanCompleteBarView](https://github.com/TanZhiL/PlanCompleteBarView)
+完成.https://blog.csdn.net/weixin_42703445/article/details/105005175
