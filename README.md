@@ -1,5 +1,6 @@
 话不多说,先上效果图:
-<img src="https://img-blog.csdnimg.cn/20200321112309804.gif"  width="320" height="640"/>
+![效果图](https://github.com/TanZhiL/PlanCompleteBarView/blob/master/screenshot.png)
+![效果图](https://github.com/TanZhiL/PlanCompleteBarView/blob/master/screenshot1.png)
 ### 要点
 1. 支持滚动查看
 2. 支持两种显示模式切换
