@@ -4,8 +4,6 @@ import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.util.AttributeSet;
-import android.view.GestureDetector;
-import android.view.ScaleGestureDetector;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
@@ -27,13 +25,14 @@ import java.util.List;
  * Description:销售计划完成率看板
  */
 public class PlanCompleteBarView extends LinearLayout {
+    //数据集
     private List<DataWrapper> mDataWrappers;
     private Context mContext;
     //堆叠
     public final static int BAR_STYLE_OVERLAY = 0;
     //排列
     public final static int BAR_STYLE_TIE = 1;
-
+    //样式
     private int barstyle = BAR_STYLE_OVERLAY;
     //底部文字占用高度
     private int marginBottom;
@@ -68,21 +67,24 @@ public class PlanCompleteBarView extends LinearLayout {
     //顶部百分比颜色
     private int percentColor = 0xff1F2529;
 
-
+    //y轴笔
     private Paint yPaint;
+    //x轴笔
     private Paint xPaint;
     //顶部文字
     private Paint topPaint;
     //线条
     private Paint linePaint;
+    //网格线宽度
     private int lineWidth = 1;
+    //网格线颜色
     private int lineColor = 0xffE6E6E6;
-
+    //计划笔
     private Paint planPaint;
+    //完成笔
     private Paint completePaint;
-
     //y轴最大值
-    private float maxValue = 500;
+    private int maxValue = 500;
     //y轴阶数:100,200,3000,400,500
     private int step = 5;
     //y轴文本根据maxValue和step计算
@@ -91,7 +93,8 @@ public class PlanCompleteBarView extends LinearLayout {
     private float drawHeight;
     //每个值对应像素点=drawHeight/maxValue
     private float percentHeight;
-
+    //顶部文字与bar的间距
+    private int topMarginBottom = 10;
 
     public PlanCompleteBarView(Context context) {
         this(context, null);
@@ -121,57 +124,56 @@ public class PlanCompleteBarView extends LinearLayout {
     private void show() {
         removeAllViews();
         init();
-        LayoutParams layoutParams = new LayoutParams(SizeUtils.dp2px(mContext, leftWidth), ViewGroup.LayoutParams.MATCH_PARENT);
+        LayoutParams layoutParams = new LayoutParams(dp2px(leftWidth), ViewGroup.LayoutParams.MATCH_PARENT);
         addView(new LeftView(mContext), layoutParams);
 
         HorizontalScrollView scrollView = new HorizontalScrollView(mContext);
         scrollView.setHorizontalScrollBarEnabled(false);
         scrollView.addView(new RightView(mContext), new FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
-        addView(scrollView, new LayoutParams(getMeasuredWidth() - getPaddingLeft() - getPaddingRight()
-                - SizeUtils.dp2px(mContext, leftWidth), ViewGroup.LayoutParams.MATCH_PARENT));
+        addView(scrollView, new LayoutParams(getMeasuredWidth() - dp2px(leftWidth), ViewGroup.LayoutParams.MATCH_PARENT));
     }
 
     private void init() {
         yPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        yPaint.setTextSize(SizeUtils.sp2px(mContext, yTextSize));
+        yPaint.setTextSize(sp2px(yTextSize));
         yPaint.setColor(yTextColor);
 
         xPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        xPaint.setTextSize(SizeUtils.sp2px(mContext, xTextSize));
+        xPaint.setTextSize(sp2px(xTextSize));
         xPaint.setColor(xTextColor);
 
         topPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        topPaint.setTextSize(SizeUtils.sp2px(mContext, topTextSize));
+        topPaint.setTextSize(sp2px(topTextSize));
 
 
         linePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        linePaint.setStrokeWidth(SizeUtils.sp2px(mContext, lineWidth));
+        linePaint.setStrokeWidth(sp2px(lineWidth));
         linePaint.setColor(lineColor);
 
         planPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         planPaint.setStyle(Paint.Style.FILL);
-        planPaint.setStrokeWidth(SizeUtils.sp2px(mContext, barWidth));
+        planPaint.setStrokeWidth(sp2px(barWidth));
         planPaint.setColor(planColor);
 
         completePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         completePaint.setStyle(Paint.Style.FILL);
-        completePaint.setStrokeWidth(SizeUtils.sp2px(mContext, barWidth));
+        completePaint.setStrokeWidth(sp2px(barWidth));
         completePaint.setColor(completeColor);
 
         Paint.FontMetricsInt xFontMetricsInt = xPaint.getFontMetricsInt();
         marginBottom = xFontMetricsInt.bottom - xFontMetricsInt.top;
 
         Paint.FontMetricsInt topFontMetricsInt = topPaint.getFontMetricsInt();
-        marginTop = topFontMetricsInt.bottom - topFontMetricsInt.top;
+        marginTop = topFontMetricsInt.bottom - topFontMetricsInt.top + topMarginBottom;
         //因为顶部有两行文字
         marginTop *= 2;
         drawHeight = getMeasuredHeight() - getPaddingBottom() - getPaddingTop() - marginBottom - marginTop;
         percentHeight = drawHeight / maxValue;
         yLabels = new ArrayList<>();
-        float i = maxValue / step;
+        int i = maxValue / step;
         for (int j = 0; j <= step; j++) {
-            yLabels.add(String.valueOf((int) (j * i)));
+            yLabels.add(String.valueOf(j * i));
         }
     }
 
@@ -188,19 +190,18 @@ public class PlanCompleteBarView extends LinearLayout {
 
         @Override
         protected void onDraw(Canvas canvas) {
+            //将坐标系移动至右下角
             canvas.translate(mWidth, mHeight - marginBottom);
-
+            //计算每一段的长度
             float i = maxValue / step;
 
             for (int j = 0; j <= step; j++) {
-
                 float i1 = j * i * percentHeight;
                 // canvas.drawLine(0,-i1,-mWidth,-i1,linePaint);
-
                 String s = yLabels.get(j);
                 float v1 = yPaint.measureText(s);
-                canvas.drawText(s, -v1 - SizeUtils.dp2px(mContext, yPaddingRight), -i1, yPaint);
-
+                //绘制y轴文字
+                canvas.drawText(s, -v1 - dp2px(yPaddingRight), -i1, yPaint);
             }
         }
 
@@ -224,32 +225,32 @@ public class PlanCompleteBarView extends LinearLayout {
 
         @Override
         protected void onDraw(Canvas canvas) {
+            //将坐标移动至左下角
             canvas.translate(0, mHeight);
             float i = maxValue / step;
-            //网格
+            //绘制网格线
             for (int j = 0; j <= step; j++) {
                 float i1 = j * i * percentHeight;
                 canvas.drawLine(0, -i1 - marginBottom, mWidth, -i1 - marginBottom, linePaint);
             }
-            //x轴文字
             for (int j = 0; j < mDataWrappers.size(); j++) {
-                String label = mDataWrappers.get(j).label;
-                float v = xPaint.measureText(label);
-                canvas.drawText(label, j * (SizeUtils.dp2px(mContext, spaceWidth)
-                        + SizeUtils.dp2px(mContext, barWidth))
-                        + SizeUtils.dp2px(mContext, barWidth / 2) +
-                        SizeUtils.dp2px(mContext, spaceWidth / 2) - v / 2, -5, xPaint);
-            }
-            //bar
-            canvas.translate(0, -marginBottom);
-            for (int j = 0; j < mDataWrappers.size(); j++) {
-                float x = j * (SizeUtils.dp2px(mContext, spaceWidth)
-                        + SizeUtils.dp2px(mContext, barWidth))
-                        + SizeUtils.dp2px(mContext, barWidth / 2) +
-                        SizeUtils.dp2px(mContext, spaceWidth / 2);
-
                 DataWrapper dataWrapper = mDataWrappers.get(j);
+                String label = dataWrapper.label;
+                if (j == 0) {
+                    canvas.translate(0, -marginBottom);
+                }
+                //计算绘制的x中心
+                float x = j * (dp2px(spaceWidth)
+                        + dp2px(barWidth))
+                        + dp2px(barWidth / 2)
+                        + dp2px(spaceWidth / 2);
+                //绘制x轴文字
+                float textWidth = xPaint.measureText(label);
+                Paint.FontMetrics fontMetrics = xPaint.getFontMetrics();
+                canvas.drawText(label, x - textWidth / 2, marginBottom - fontMetrics.bottom, xPaint);
+                //绘制bar
                 if (BAR_STYLE_OVERLAY == barstyle) {
+                    //堆叠样式,先绘制大的数值再绘制小的数值,形成覆盖的效果
                     if (dataWrapper.complete > dataWrapper.plan) {
                         canvas.drawLine(x, 0, x, -dataWrapper.complete * percentHeight, completePaint);
                         canvas.drawLine(x, 0, x, -dataWrapper.plan * percentHeight, planPaint);
@@ -257,43 +258,44 @@ public class PlanCompleteBarView extends LinearLayout {
                         canvas.drawLine(x, 0, x, -dataWrapper.plan * percentHeight, planPaint);
                         canvas.drawLine(x, 0, x, -dataWrapper.complete * percentHeight, completePaint);
                     }
-                }else if(BAR_STYLE_TIE == barstyle){
-                    planPaint.setStrokeWidth(SizeUtils.dp2px(mContext, barWidth/2));
-                    completePaint.setStrokeWidth(SizeUtils.dp2px(mContext, barWidth/2));
-                    canvas.drawLine(x-SizeUtils.dp2px(mContext, barWidth/4), 0, x-SizeUtils.dp2px(mContext, barWidth/4), -dataWrapper.plan * percentHeight, planPaint);
-                    canvas.drawLine(x+SizeUtils.dp2px(mContext, barWidth/4), 0,
-                            x+SizeUtils.dp2px(mContext, barWidth/4), -dataWrapper.complete * percentHeight, completePaint);
+                } else if (BAR_STYLE_TIE == barstyle) {
+                    //排列样式
+                    planPaint.setStrokeWidth(dp2px(barWidth / 2));
+                    completePaint.setStrokeWidth(dp2px(barWidth / 2));
+                    canvas.drawLine(x - dp2px(barWidth / 4), 0, x - dp2px(barWidth / 4),
+                            -dataWrapper.plan * percentHeight, planPaint);
+                    canvas.drawLine(x + dp2px(barWidth / 4), 0,
+                            x + dp2px(barWidth / 4), -dataWrapper.complete * percentHeight, completePaint);
                 }
-                //300/200
-                String s = "/";
-                float v = topPaint.measureText(s);
+                //绘制顶部文字   200%
+                //              200/100
+                //应为需要中心对齐,所以要分别绘制左边的数值和右边的数值
+                String str = "/";
+                float separatorWidth = topPaint.measureText(str);
                 topPaint.setColor(percentColor);
-                Paint.FontMetricsInt fontMetricsInt = topPaint.getFontMetricsInt();
-                int i1 = fontMetricsInt.bottom - fontMetricsInt.top;
-
-                x = j * (SizeUtils.dp2px(mContext, spaceWidth)
-                        + SizeUtils.dp2px(mContext, barWidth))
-                        + SizeUtils.dp2px(mContext, barWidth / 2) +
-                        SizeUtils.dp2px(mContext, spaceWidth / 2);
-
-                canvas.drawText(s, x - v / 2, -(Math.max(dataWrapper.complete, dataWrapper.plan) * percentHeight)
-                        - SizeUtils.dp2px(mContext, 10), topPaint);
-
+                canvas.drawText(str, x - separatorWidth / 2,
+                        -(Math.max(dataWrapper.complete, dataWrapper.plan) * percentHeight)
+                                - dp2px(topMarginBottom), topPaint);
+                //绘制完成数值200
                 topPaint.setColor(completeColor);
-                float v1 = topPaint.measureText(String.valueOf(dataWrapper.complete));
-                canvas.drawText(String.valueOf(dataWrapper.complete), x - v / 2 - v1, -(Math.max(dataWrapper.complete, dataWrapper.plan) * percentHeight)
-                        - SizeUtils.dp2px(mContext, 10), topPaint);
-
+                textWidth = topPaint.measureText(String.valueOf(dataWrapper.complete));
+                canvas.drawText(String.valueOf(dataWrapper.complete), x - separatorWidth / 2 - textWidth,
+                        -(Math.max(dataWrapper.complete, dataWrapper.plan) * percentHeight)
+                                - dp2px(topMarginBottom), topPaint);
+                //绘制计划数值100
                 topPaint.setColor(planColor);
-                canvas.drawText(String.valueOf(dataWrapper.plan), x + v / 2, -(Math.max(dataWrapper.complete, dataWrapper.plan) * percentHeight)
-                        - SizeUtils.dp2px(mContext, 10), topPaint);
-
+                canvas.drawText(String.valueOf(dataWrapper.plan), x + separatorWidth / 2,
+                        -(Math.max(dataWrapper.complete, dataWrapper.plan) * percentHeight)
+                                - dp2px(topMarginBottom), topPaint);
+                //绘制百分比 200%
                 topPaint.setColor(percentColor);
                 float percent = (float) dataWrapper.complete / dataWrapper.plan * 100;
-                s = (int) percent + "%";
-                v = topPaint.measureText(s);
-                canvas.drawText(s, x - v / 2, -(Math.max(dataWrapper.complete, dataWrapper.plan) * percentHeight)
-                        - SizeUtils.dp2px(mContext, 5) - i1, topPaint);
+                str = (int) percent + "%";
+                textWidth = topPaint.measureText(str);
+                Paint.FontMetricsInt fontMetricsInt = topPaint.getFontMetricsInt();
+                int textHeight = fontMetricsInt.bottom - fontMetricsInt.top;
+                canvas.drawText(str, x - textWidth / 2, -(Math.max(dataWrapper.complete, dataWrapper.plan) * percentHeight)
+                        - dp2px(topMarginBottom) - textHeight, topPaint);
             }
         }
 
@@ -301,7 +303,7 @@ public class PlanCompleteBarView extends LinearLayout {
         protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
             //计算所需宽度
             int i = barWidth * mDataWrappers.size() + spaceWidth * mDataWrappers.size();
-            setMeasuredDimension(SizeUtils.dp2px(mContext, i), MeasureSpec.getSize(heightMeasureSpec));
+            setMeasuredDimension(dp2px(i), MeasureSpec.getSize(heightMeasureSpec));
 
         }
 
@@ -311,6 +313,28 @@ public class PlanCompleteBarView extends LinearLayout {
             mWidth = getMeasuredWidth();
             mHeight = getMeasuredHeight();
         }
+    }
+
+    /**
+     * dp转px
+     *
+     * @param dpValue dp值
+     * @return px值
+     */
+    private int dp2px(float dpValue) {
+        final float scale = getContext().getResources().getDisplayMetrics().density;
+        return (int) (dpValue * scale + 0.5f);
+    }
+
+    /**
+     * sp转px
+     *
+     * @param spValue sp值
+     * @return px值
+     */
+    private int sp2px(float spValue) {
+        final float fontScale = getContext().getResources().getDisplayMetrics().scaledDensity;
+        return (int) (spValue * fontScale + 0.5f);
     }
 
     public static class DataWrapper {
@@ -449,7 +473,7 @@ public class PlanCompleteBarView extends LinearLayout {
         return maxValue;
     }
 
-    public void setMaxValue(float maxValue) {
+    public void setMaxValue(int maxValue) {
         this.maxValue = maxValue;
     }
 
@@ -473,4 +497,5 @@ public class PlanCompleteBarView extends LinearLayout {
     public void invalidate() {
         show();
     }
+
 }
